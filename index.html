@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CineFlow | Production Grade UI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --brand: #e11d48;
+            --bg-dark: #050505;
+            --card-w-mobile: 140px;
+            --card-w-desktop: 240px;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg-dark); 
+            color: #ffffff;
+            overscroll-behavior-y: none; /* Sprečava "bounce" na iOS-u */
+        }
+
+        /* --- UNBREAKABLE SCROLL LOGIC --- */
+        .hide-scroll {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        
+        .snap-item { scroll-snap-align: start; }
+
+        /* --- FLUID TYPOGRAPHY --- */
+        .hero-title {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            line-height: 0.95;
+        }
+
+        /* --- PREMIUM UI EFFECTS --- */
+        .glass-nav {
+            background: rgba(5, 5, 5, 0.7);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .hero-gradient {
+            background: linear-gradient(to right, var(--bg-dark) 10%, rgba(5,5,5,0.6) 50%, transparent 100%),
+                        linear-gradient(to top, var(--bg-dark) 0%, transparent 40%);
+        }
+
+        /* --- SKELETON & LOADING --- */
+        .shimmer {
+            background: linear-gradient(90deg, #0a0a0a 25%, #151515 50%, #0a0a0a 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite linear;
+        }
+        @keyframes loading { to { background-position: -200% 0; } }
+
+        /* --- IMAGE SAFETY --- */
+        img { object-fit: cover; pointer-events: none; user-select: none; }
+    </style>
+</head>
+<body class="antialiased selection:bg-rose-600 selection:text-white">
+
+    <nav id="main-nav" class="fixed top-0 w-full z-[100] px-4 md:px-12 py-4 flex items-center justify-between transition-all duration-500">
+        <div class="flex items-center gap-2 text-xl md:text-2xl font-black tracking-tighter cursor-pointer group" onclick="location.reload()">
+            <i data-lucide="clapperboard" class="text-rose-600 group-hover:scale-110 transition-transform"></i>
+            CINE<span class="text-rose-600">FLOW</span>
+        </div>
+        
+        <div class="flex-1 max-w-lg mx-4 md:mx-12 relative">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500"></i>
+            <input type="text" id="searchInput" placeholder="Search..." 
+                class="w-full bg-zinc-900/50 border border-white/5 rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-rose-600/40 transition-all">
+        </div>
+
+        <div class="flex items-center gap-4">
+            <button class="relative p-2 text-zinc-400 hover:text-white" id="watchlist-toggle">
+                <i data-lucide="bookmark" class="w-6 h-6"></i>
+                <span id="list-badge" class="absolute top-1 right-1 w-2 h-2 bg-rose-600 rounded-full scale-0 transition-transform"></span>
+            </button>
+        </div>
+    </nav>
+
+    <header id="hero" class="relative min-h-[70vh] md:h-[90vh] w-full flex items-center px-4 md:px-12 pt-20 overflow-hidden">
+        <div id="hero-bg" class="absolute inset-0 bg-cover bg-center transition-all duration-1000 scale-105 opacity-0"></div>
+        <div class="absolute inset-0 hero-gradient"></div>
+        
+        <div class="relative z-10 max-w-4xl space-y-4 md:space-y-6">
+            <div id="hero-meta" class="flex items-center gap-3 text-[10px] md:text-xs font-bold text-rose-500 uppercase tracking-widest"></div>
+            <h1 id="hero-title" class="hero-title font-black italic tracking-tighter text-white uppercase drop-shadow-2xl"></h1>
+            <p id="hero-desc" class="text-zinc-400 text-sm md:text-lg max-w-2xl font-medium leading-relaxed line-clamp-3 md:line-clamp-4 italic"></p>
+            
+            <div class="flex flex-wrap gap-4 pt-4">
+                <button class="bg-white text-black px-6 md:px-10 py-3 md:py-4 rounded-xl font-black flex items-center gap-2 hover:bg-rose-600 hover:text-white transition-all active:scale-95 shadow-xl shadow-white/5">
+                    <i data-lucide="play" class="fill-current"></i> PLAY NOW
+                </button>
+                <button id="main-add-list" class="bg-white/10 backdrop-blur-xl text-white px-6 md:px-10 py-3 md:py-4 rounded-xl font-bold border border-white/10 hover:bg-white/20 transition-all active:scale-95">
+                    <i data-lucide="plus"></i> LIST
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="relative z-20 -mt-10 md:-mt-20 pb-20 space-y-12 md:space-y-20">
+        
+        <section class="pl-4 md:pl-12 overflow-hidden group/row">
+            <div class="flex items-center justify-between pr-4 md:pr-12 mb-6">
+                <div class="space-y-1">
+                    <h2 class="text-lg md:text-2xl font-black flex items-center gap-2 tracking-tighter uppercase">
+                        <span class="w-1 h-5 md:h-8 bg-rose-600"></span> Trending This Week
+                    </h2>
+                </div>
+                <div class="flex gap-2">
+                    <button class="scroll-btn p-2 rounded-lg bg-zinc-900 border border-white/5 hover:bg-rose-600 transition" data-dir="left" data-target="trending-row">
+                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    </button>
+                    <button class="scroll-btn p-2 rounded-lg bg-zinc-900 border border-white/5 hover:bg-rose-600 transition" data-dir="right" data-target="trending-row">
+                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="trending-row" class="flex gap-3 md:gap-6 overflow-x-auto pr-12 pb-4 hide-scroll scroll-smooth">
+                <div class="min-w-[140px] md:min-w-[240px] aspect-[2/3] rounded-2xl shimmer"></div>
+                <div class="min-w-[140px] md:min-w-[240px] aspect-[2/3] rounded-2xl shimmer"></div>
+                <div class="min-w-[140px] md:min-w-[240px] aspect-[2/3] rounded-2xl shimmer"></div>
+                <div class="min-w-[140px] md:min-w-[240px] aspect-[2/3] rounded-2xl shimmer"></div>
+            </div>
+        </section>
+
+        <section id="search-section" class="hidden px-4 md:px-12 animate-in fade-in duration-500">
+            <h2 class="text-xl font-black mb-8 flex items-center gap-2"><i data-lucide="search" class="text-rose-600"></i> RESULTS</h2>
+            <div id="search-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-8"></div>
+        </section>
+
+    </main>
+
+    <script>
+        /**
+         * CINEFLOW CORE - SENIOR ARCHITECTURE
+         * Hand-crafted for Unbreakable UX & Performance
+         */
+        
+        const CineApp = (() => {
+            // Private State
+            const state = {
+                watchlist: JSON.parse(localStorage.getItem('cineflow_v3')) || [],
+                activeShow: null
+            };
+
+            // DOM Cache
+            const ui = {
+                nav: document.getElementById('main-nav'),
+                hero: {
+                    bg: document.getElementById('hero-bg'),
+                    title: document.getElementById('hero-title'),
+                    desc: document.getElementById('hero-desc'),
+                    meta: document.getElementById('hero-meta'),
+                    btn: document.getElementById('main-add-list')
+                },
+                rows: {
+                    trending: document.getElementById('trending-row'),
+                    search: document.getElementById('search-grid')
+                },
+                searchSection: document.getElementById('search-section'),
+                trendingSection: document.getElementById('trending-row').parentElement,
+                badge: document.getElementById('list-badge')
+            };
+
+            // 1. DATA SANITIZATION (Safety First)
+            const clean = (str) => {
+                const div = document.createElement('div');
+                div.innerHTML = str;
+                return div.textContent || div.innerText || "";
+            };
+
+            // 2. API SERVICE
+            const api = {
+                async fetch(query) {
+                    try {
+                        const res = await fetch(`https://api.tvmaze.com/search/shows?q=${query}`);
+                        if (!res.ok) throw new Error();
+                        const data = await res.json();
+                        // Filter: Only shows with images and summary
+                        return data.map(i => i.show).filter(s => s.image?.original && s.summary);
+                    } catch (e) {
+                        return [];
+                    }
+                }
+            };
+
+            // 3. UI GENERATORS
+            const createCard = (show) => {
+                const inList = state.watchlist.some(s => s.id === show.id);
+                const el = document.createElement('div');
+                el.className = 'snap-item flex-shrink-0 w-[140px] md:w-[240px] group cursor-pointer';
+                
+                el.innerHTML = `
+                    <div class="relative aspect-[2/3] rounded-xl md:rounded-3xl overflow-hidden bg-zinc-900 border border-white/5 transition-all duration-500 group-hover:scale-[1.03] group-hover:border-rose-600/50 shadow-2xl">
+                        <img src="${show.image.medium}" class="w-full h-full object-cover" alt="${show.name}" loading="lazy">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-4 flex flex-col justify-end">
+                            <span class="text-rose-500 font-bold text-xs">⭐ ${show.rating.average || '8.0'}</span>
+                        </div>
+                        <button class="list-btn absolute top-3 right-3 p-2 rounded-full bg-black/60 backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-600" data-id="${show.id}">
+                            <i data-lucide="${inList ? 'check' : 'plus'}" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <h4 class="mt-3 font-bold text-xs md:text-base truncate group-hover:text-rose-600 transition-colors uppercase tracking-tight">${show.name}</h4>
+                `;
+
+                // Smart Click Handling
+                el.onclick = (e) => {
+                    if (e.target.closest('.list-btn')) {
+                        toggleList(show);
+                        e.stopPropagation();
+                    } else {
+                        updateHero(show);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                };
+                return el;
+            };
+
+            const updateHero = (show) => {
+                const { bg, title, desc, meta, btn } = ui.hero;
+                
+                bg.style.opacity = '0';
+                setTimeout(() => {
+                    bg.style.backgroundImage = `url(${show.image.original})`;
+                    bg.style.opacity = '0.5';
+                    title.textContent = show.name;
+                    desc.textContent = clean(show.summary);
+                    meta.innerHTML = `<span>${show.premiered?.split('-')[0] || '2024'}</span> • <span>${show.genres[0] || 'Drama'}</span> • <span class="text-white">⭐ ${show.rating.average || '9.2'}</span>`;
+                    
+                    const inList = state.watchlist.some(s => s.id === show.id);
+                    btn.innerHTML = inList ? `<i data-lucide="check"></i> IN LIST` : `<i data-lucide="plus"></i> MY LIST`;
+                    btn.onclick = () => toggleList(show);
+                    lucide.createIcons();
+                }, 300);
+            };
+
+            const toggleList = (show) => {
+                const idx = state.watchlist.findIndex(s => s.id === show.id);
+                if (idx > -1) state.watchlist.splice(idx, 1);
+                else state.watchlist.push(show);
+                
+                localStorage.setItem('cineflow_v3', JSON.stringify(state.watchlist));
+                ui.badge.style.transform = state.watchlist.length > 0 ? 'scale(1)' : 'scale(0)';
+                
+                // Refresh active view
+                renderCurrent();
+                if (ui.hero.title.textContent === show.name) updateHero(show);
+            };
+
+            const renderCurrent = async () => {
+                const results = await api.fetch('marvel');
+                ui.rows.trending.innerHTML = '';
+                results.forEach(s => ui.rows.trending.appendChild(createCard(s)));
+                if (!state.activeShow) updateHero(results[0]);
+                lucide.createIcons();
+            };
+
+            // 4. EVENT CONTROLLERS
+            const initEvents = () => {
+                // Scroll Buttons Fix
+                document.querySelectorAll('.scroll-btn').forEach(btn => {
+                    btn.onclick = () => {
+                        const row = document.getElementById(btn.dataset.target);
+                        const amount = btn.dataset.dir === 'right' ? 400 : -400;
+                        row.scrollBy({ left: amount, behavior: 'smooth' });
+                    };
+                });
+
+                // Navbar Effect
+                window.onscroll = () => {
+                    if (window.scrollY > 50) ui.nav.classList.add('glass-nav');
+                    else ui.nav.classList.remove('glass-nav');
+                };
+
+                // Search Debounce
+                let timer;
+                document.getElementById('searchInput').oninput = (e) => {
+                    clearTimeout(timer);
+                    timer = setTimeout(async () => {
+                        const val = e.target.value;
+                        if (val.length > 2) {
+                            const results = await api.fetch(val);
+                            ui.rows.search.innerHTML = '';
+                            results.forEach(s => ui.rows.search.appendChild(createCard(s)));
+                            ui.searchSection.classList.remove('hidden');
+                            ui.trendingSection.classList.add('hidden');
+                        } else {
+                            ui.searchSection.classList.add('hidden');
+                            ui.trendingSection.classList.remove('hidden');
+                        }
+                        lucide.createIcons();
+                    }, 400);
+                };
+            };
+
+            return {
+                start: () => {
+                    initEvents();
+                    renderCurrent();
+                    ui.badge.style.transform = state.watchlist.length > 0 ? 'scale(1)' : 'scale(0)';
+                }
+            };
+        })();
+
+        document.addEventListener('DOMContentLoaded', CineApp.start);
+    </script>
+</body>
+</html>
